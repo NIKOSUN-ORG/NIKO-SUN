@@ -14,7 +14,6 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
  * @dev Implementa ERC-1155 para múltiples proyectos en un solo contrato
  * @dev Características: compra de tokens, rewards proporcionales, transferencias, paginación
  * @dev SEGURIDAD: ReentrancyGuard, Pausable, validaciones exhaustivas
- * @dev Recomendaciones para producción:
  */
 contract SolarTokenV3Optimized is ERC1155, Ownable, Pausable, ReentrancyGuard {
     using Strings for uint256;
@@ -34,11 +33,11 @@ contract SolarTokenV3Optimized is ERC1155, Ownable, Pausable, ReentrancyGuard {
         uint96 totalSupply;
         uint96 minted;
         uint96 minPurchase;
-        uint128 priceWei; 
+        uint128 priceWei;
         uint64 createdAt;
         bool active;
         uint128 totalEnergyKwh;
-        uint48 reserved1; 
+        uint48 reserved1;
         uint128 totalRevenue;
         uint128 reserved2;
         uint256 rewardPerTokenStored;
@@ -242,6 +241,35 @@ contract SolarTokenV3Optimized is ERC1155, Ownable, Pausable, ReentrancyGuard {
             );
     }
 
+    /**
+     * @notice Retorna el nombre visible del token para un proyecto
+     * @dev Algunos exploradores (Etherscan, etc.) detectan esta función automáticamente
+     * @dev Formato: "NombreProyecto (ID: X)" o "NikoSolarID{X}" si no tiene nombre
+     * @param projectId ID del proyecto
+     * @return Nombre formateado del token
+     */
+    function name(uint256 projectId) public view returns (string memory) {
+        if (projects[projectId].creator == address(0)) revert ProjectNotFound();
+
+        string memory projectName = metadata[projectId].name;
+
+        // Si el proyecto tiene nombre, usarlo con el ID
+        if (bytes(projectName).length > 0) {
+            return
+                string(
+                    abi.encodePacked(
+                        projectName,
+                        " (ID: ",
+                        projectId.toString(),
+                        ")"
+                    )
+                );
+        }
+
+        // Fallback: usar formato "NikoSolarID{X}"
+        return string(abi.encodePacked("NikoSolarID", projectId.toString()));
+    }
+
     // ========================================
     // CREACIÓN DE PROYECTOS
     // ========================================
@@ -249,21 +277,21 @@ contract SolarTokenV3Optimized is ERC1155, Ownable, Pausable, ReentrancyGuard {
     /**
      * @notice Crea un nuevo proyecto solar
      * @dev El msg.sender se convierte en el creator del proyecto
-     * @param name Nombre del proyecto
+     * @param projectName Nombre del proyecto
      * @param totalSupply Cantidad total de tokens disponibles
      * @param priceWei Precio por token en wei
      * @param minPurchase Cantidad mínima de tokens por compra
      * @return projectId ID del proyecto creado
      */
     function createProject(
-        string calldata name,
+        string calldata projectName,
         uint96 totalSupply,
         uint128 priceWei,
         uint96 minPurchase
     ) external returns (uint256 projectId) {
         projectId = _createProjectLogic(
             msg.sender,
-            name,
+            projectName,
             totalSupply,
             priceWei,
             minPurchase
@@ -274,7 +302,7 @@ contract SolarTokenV3Optimized is ERC1155, Ownable, Pausable, ReentrancyGuard {
      * @notice Crea un proyecto en nombre de otro usuario (solo owner)
      * @dev Permite al admin crear proyectos para otros usuarios
      * @param creator Dirección que será el creator del proyecto
-     * @param name Nombre del proyecto
+     * @param projectName Nombre del proyecto
      * @param totalSupply Cantidad total de tokens disponibles
      * @param priceWei Precio por token en wei
      * @param minPurchase Cantidad mínima de tokens por compra
@@ -282,7 +310,7 @@ contract SolarTokenV3Optimized is ERC1155, Ownable, Pausable, ReentrancyGuard {
      */
     function createProjectFor(
         address creator,
-        string calldata name,
+        string calldata projectName,
         uint96 totalSupply,
         uint128 priceWei,
         uint96 minPurchase
@@ -290,7 +318,7 @@ contract SolarTokenV3Optimized is ERC1155, Ownable, Pausable, ReentrancyGuard {
         if (creator == address(0)) revert InvalidCreator();
         projectId = _createProjectLogic(
             creator,
-            name,
+            projectName,
             totalSupply,
             priceWei,
             minPurchase
@@ -303,7 +331,7 @@ contract SolarTokenV3Optimized is ERC1155, Ownable, Pausable, ReentrancyGuard {
      */
     function _createProjectLogic(
         address creator,
-        string calldata name,
+        string calldata projectName,
         uint96 totalSupply,
         uint128 priceWei,
         uint96 minPurchase
@@ -330,7 +358,7 @@ contract SolarTokenV3Optimized is ERC1155, Ownable, Pausable, ReentrancyGuard {
             rewardPerTokenStored: 0
         });
 
-        metadata[projectId] = ProjectMetadata({name: name});
+        metadata[projectId] = ProjectMetadata({name: projectName});
 
         // Agregar proyecto al array del creador para consulta eficiente O(1)
         _userProjects[creator].push(projectId);
@@ -338,7 +366,7 @@ contract SolarTokenV3Optimized is ERC1155, Ownable, Pausable, ReentrancyGuard {
         emit ProjectCreated(
             projectId,
             creator,
-            name,
+            projectName,
             totalSupply,
             priceWei,
             minPurchase,
