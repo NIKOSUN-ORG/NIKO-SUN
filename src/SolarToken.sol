@@ -8,14 +8,14 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
- * @title SolarTokenV3Optimized
+ * @title NiKoSun
  * @author NIKO-SUN
  * @notice Sistema de tokenización de proyectos solares con distribución proporcional de ingresos
  * @dev Implementa ERC-1155 para múltiples proyectos en un solo contrato
  * @dev Características: compra de tokens, rewards proporcionales, transferencias, paginación
  * @dev SEGURIDAD: ReentrancyGuard, Pausable, validaciones exhaustivas
  */
-contract SolarTokenV3Optimized is ERC1155, Ownable, Pausable, ReentrancyGuard {
+contract NiKoSun is ERC1155, Ownable, Pausable, ReentrancyGuard {
     using Strings for uint256;
 
     // ========================================
