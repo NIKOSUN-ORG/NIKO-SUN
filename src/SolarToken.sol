@@ -6,6 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol"; // Mucho má
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 
 /**
  * @title NiKoSun
@@ -23,6 +24,10 @@ contract NiKoSun is ERC1155, Ownable, Pausable, ReentrancyGuard {
     // ========================================
 
     uint256 private constant PRECISION = 1e18;
+
+    // Logo IPFS para todos los tokens del proyecto
+    string private constant LOGO_IPFS =
+        "https://cyan-acceptable-echidna-172.mypinata.cloud/ipfs/bafkreihcpqm4pxw7unbejavgmhbofoxqsndnhn54segnufl7vcwm6fdwjy";
 
     // ========================================
     // ESTRUCTURAS
@@ -224,50 +229,41 @@ contract NiKoSun is ERC1155, Ownable, Pausable, ReentrancyGuard {
 
     /**
      * @notice Retorna la URI completa del metadata para un proyecto
-     * @dev Concatena baseURI + projectId + ".json"
+     * @dev Genera un Data URI con JSON embebido onchain (no requiere servidor externo)
+     * @dev Versión simplificada para evitar "Stack too deep"
      * @param projectId ID del proyecto
-     * @return URI completa del metadata
+     * @return URI completa del metadata en formato data:application/json;base64
      */
     function uri(
         uint256 projectId
     ) public view override returns (string memory) {
-        return
-            string(
-                abi.encodePacked(
-                    _baseMetadataURI,
-                    projectId.toString(),
-                    ".json"
-                )
-            );
-    }
-
-    /**
-     * @notice Retorna el nombre visible del token para un proyecto
-     * @dev Algunos exploradores (Etherscan, etc.) detectan esta función automáticamente
-     * @dev Formato: "NombreProyecto (ID: X)" o "NikoSolarID{X}" si no tiene nombre
-     * @param projectId ID del proyecto
-     * @return Nombre formateado del token
-     */
-    function name(uint256 projectId) public view returns (string memory) {
         if (projects[projectId].creator == address(0)) revert ProjectNotFound();
 
         string memory projectName = metadata[projectId].name;
+        
+        // Nombre del token simplificado
+        string memory tokenName = bytes(projectName).length > 0
+            ? string(abi.encodePacked(projectName, " #", projectId.toString()))
+            : string(abi.encodePacked("NikoSolarID", projectId.toString()));
 
-        // Si el proyecto tiene nombre, usarlo con el ID
-        if (bytes(projectName).length > 0) {
-            return
-                string(
-                    abi.encodePacked(
-                        projectName,
-                        " (ID: ",
-                        projectId.toString(),
-                        ")"
-                    )
-                );
-        }
+        // JSON minimalista para evitar stack too deep
+        string memory json = string(
+            abi.encodePacked(
+                '{"name":"',
+                tokenName,
+                '","description":"Solar energy investment token. Powered by NiKoSun.","image":"',
+                LOGO_IPFS,
+                '"}'
+            )
+        );
 
-        // Fallback: usar formato "NikoSolarID{X}"
-        return string(abi.encodePacked("NikoSolarID", projectId.toString()));
+        return
+            string(
+                abi.encodePacked(
+                    "data:application/json;base64,",
+                    Base64.encode(bytes(json))
+                )
+            );
     }
 
     // ========================================

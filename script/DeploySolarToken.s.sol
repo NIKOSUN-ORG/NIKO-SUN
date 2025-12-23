@@ -2,7 +2,7 @@
 pragma solidity 0.8.24;
 
 import {Script,console} from "forge-std/Script.sol";
-import {SolarTokenV1} from "../src/SolarTokenV1.sol";
+import {NiKoSun} from "../src/SolarToken.sol";
 
 /**
  * @title DeploySolarToken
@@ -31,7 +31,7 @@ contract DeploySolarToken is Script {
         vm.startBroadcast();
 
         // Desplegar contrato
-        SolarTokenV1 solarToken = new SolarTokenV1(baseURI);
+        NiKoSun solarToken = new NiKoSun();
 
         // Detener broadcast
         vm.stopBroadcast();
