@@ -8,7 +8,7 @@
 
 | Red | Dirección |
 |-----|-----------|
-| **Syscoin Testnet** | [`0x6e9fd4C2D15672594f4Eb4076d67c4D77352A512`](https://tanenbaum.io/address/0x6e9fd4C2D15672594f4Eb4076d67c4D77352A512) |
+| **Syscoin Testnet** | [`0xA91D0F5ce84f8CbE20443B806ceF8D8116C8CEC8`](https://tanenbaum.io/address/0xA91D0F5ce84f8CbE20443B806ceF8D8116C8CEC8) |
 
 ---
 
